@@ -100,10 +100,10 @@ class AlgoTabWindow():
             plus_btn.grid(row=current_row, column=2, padx=2, pady=5)
 
             # Minus button (return/remove from tab)
-            minus_btn = tk.Button(product_frame, text="-",
-                                  command=lambda p=product: self.remove_from_tab(p),
-                                  font=("Arial", 14), bg="red", fg="white", width=4, height=1)
-            minus_btn.grid(row=current_row, column=3, padx=2, pady=5)
+            # minus_btn = tk.Button(product_frame, text="-",
+            #                       command=lambda p=product: self.add_to_tab(p),
+            #                       font=("Arial", 14), bg="red", fg="white", width=4, height=1)
+            # minus_btn.grid(row=current_row, column=3, padx=2, pady=5)
 
             # Quantity label
             quantity_label = tk.Label(product_frame, text=str(product.quantity),
@@ -116,7 +116,7 @@ class AlgoTabWindow():
 
         # Pack canvas and scrollbar
         canvas.pack(side="left", fill="both", expand=True, padx=10)
-        scrollbar.pack(side="right", fill="y")
+        # scrollbar.pack(side="right", fill="y")
 
     def _create_totals(self):
         totals_frame = tk.Frame(self.window, bg="black", relief="ridge", borderwidth=2)
@@ -189,49 +189,55 @@ class AlgoTabWindow():
             self.export_to_csv_with_dialog()
 
     def export_to_csv_with_dialog(self):
-        """Export current data to CSV file"""
-        directory = filedialog.askdirectory(title="Επιλέξτε φάκελο αποθήκευσης")
-        if directory:
-            current_datetime = datetime.now()
-            date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
-            file_name = f"algo_tab_{date_time_string}.csv"
-            file_path = os.path.join(directory, file_name)
 
-            try:
-                with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
-                    csv_writer = csv.writer(csv_file)
+        # Get user's home directory
+        user_home = os.path.expanduser("~")
 
-                    # Write header
-                    csv_writer.writerow(["Προϊόν", "Ποσότητα", "Τιμή Μονάδας", "Συνολική Αξία"])
+        # Create base directory in Documents
+        base_dir = os.path.join(user_home, "Documents", "AlgoTab_Data")
+        # Get the current date info
+        current_datetime = datetime.now()
+        year = current_datetime.strftime("%Y")
+        month = current_datetime.strftime("%Y-%m_%B")  # e.g. 2025-11_November
+        date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
+    
+        # Create folder structure
+        export_dir = os.path.join(base_dir, year, month)
+        try:
+            os.makedirs(export_dir, exist_ok=True)
+        except Exception :
+            messagebox.showerror("Error", f"Αδυναμία δημιουργίας φακέλου:\n{str(e)}")
+            return
+        
+        file_name = f"algo_tab_{date_time_string}.csv"
+        file_path = os.path.join(export_dir, file_name)
 
-                    # Write products
-                    for product in self.inventory.products:
-                        total_value = product.get_total_value()
-                        csv_writer.writerow([
-                            product.name,
-                            product.quantity,
-                            f"€{product.price:.2f}",
-                            f"€{total_value:.2f}"
-                        ])
+        try:
+            with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
+                csv_writer = csv.writer(csv_file)
+                csv_writer.writerow(["Προϊόν", "Ποσότητα", "Τιμή μονάδας", "Συνολική αξία"])
 
-                    # Empty row
-                    csv_writer.writerow(["", "", "", ""])
+                for product in self.inventory.products:
+                    total_value = product.get_total_value()
+                    csv_writer.writerow([
+                        product.name,
+                        product.quantity,
+                        f"€{product.price:.2f}",
+                        f"€{total_value:.2f}"
+                    ])
 
-                    # Summary
-                    csv_writer.writerow(["Αρχικό Ταμείο", "", "", f"€{self.inventory.starting_balance:.2f}"])
-                    csv_writer.writerow(["Τρέχον Ταμείο", "", "", f"€{self.current_total:.2f}"])
-                    csv_writer.writerow(["Συνολική Αξία Αποθέματος", "", "", f"€{self.total_value:.2f}"])
+                csv_writer.writerow(["", "", "", ""])
 
-                    # Calculate sales
-                    sales = self.current_total - self.inventory.starting_balance
-                    csv_writer.writerow(["Πωλήσεις", "", "", f"€{sales:.2f}"])
+                csv_writer.writerow(["Αρχικό  Ταμείο", "", "", f"€{self.inventory.starting_balance:.2f}"])
+                csv_writer.writerow(["Τελικό Ταμείο", "", "", f"€{self.current_total:.2f}"])
+                csv_writer.writerow(["Συνολική Αξία αποθέματος", "", "", f"€{self.total_value:.2f}"])
 
-                messagebox.showinfo("Επιτυχία",
-                                    f"Το αρχείο αποθηκεύτηκε επιτυχώς!\n\n{file_path}")
+                messagebox.showinfo("Επιτυχία", f"Το αρχειο αποθηκεύτηκε επιτυχώς\n\n{file_path}")
 
-            except Exception as e:
-                messagebox.showerror("Σφάλμα",
-                                     f"Αποτυχία εξαγωγής αρχείου:\n{str(e)}")
+
+        except Exception as e:
+            messagebox.showerror()
+
 
     def show(self):
         """Start the main event loop"""

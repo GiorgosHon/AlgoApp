@@ -12,6 +12,23 @@ class StockInputWindow():
         self.window.title("Stock Input")
         self.window.geometry("600x550")
 
+        self.unumbered_products = [
+            "Καφές",
+            "Φραπές",
+            "Ποτό",
+            "Σφηνάκι"
+        ]
+        self.stocked_products = []
+
+        for product in self.products:
+            self.stocked_products.append(product)
+
+        for product in self.products:
+            if product.name in self.unumbered_products:
+                product.set_quantity(100)
+                self.stocked_products.remove(product)
+
+        print(self.stocked_products)
         self.entries = {}
         self._create_widgets()
 
@@ -48,7 +65,8 @@ class StockInputWindow():
         current_row = 1
         first_entry = None
 
-        for product in self.products:
+        for product in self.stocked_products:
+
             # Product name
             tk.Label(frame, text=f"{product.name}", font=("Arial", 13),
                      bg="black", fg="white").grid(row=current_row, column=0,
@@ -70,7 +88,7 @@ class StockInputWindow():
                 first_entry = entry
 
             # Bind Enter key to move to next entry
-            if current_row < len(self.products):
+            if current_row < len(self.stocked_products):
                 entry.bind('<Return>', lambda e, r=current_row: self._focus_next(r))
             else:
                 entry.bind('<Return>', lambda e: self.update_stock())
@@ -126,8 +144,7 @@ class StockInputWindow():
             self.on_complete()
 
         except ValueError:
-            messagebox.showerror("Σφάλμα",
-                                 "Παρακαλώ εισάγετε έγκυρους αριθμούς για όλα τα προϊόντα!")
+            messagebox.showerror("Σφάλμα", "Παρακαλώ εισάγετε έγκυρους αριθμούς για όλα τα προϊόντα!")
 
     def show(self):
         """Start the window main loop"""
