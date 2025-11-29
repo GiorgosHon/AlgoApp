@@ -1,16 +1,26 @@
+import tkinter as tk
+from tkinter import filedialog
+
+import data_manager
 from product import Product
 from inventory import Inventory
 from starting_balance_window import StartingBalanceWindow
 from stock_input_window import StockInputWindow
 from algo_tab_window import AlgoTabWindow
-
+from data_manager import DataManager
+import csv
+import os
+from datetime import datetime
+import tkinter.messagebox as messagebox
 
 
 class AlgoApp:
 
     def __init__(self):
+        self.data_manager = DataManager()
         self.inventory = Inventory()
         self._initialize_products()
+
         self.start()
 
     def _initialize_products(self):
@@ -36,21 +46,29 @@ class AlgoApp:
 
     def start(self):
         """Start the application flow"""
-        balance_window = StartingBalanceWindow(self._on_balance_complete)
+        # Get saved balance or ask for new one
+        saved_balance = self.data_manager.get_current_balance()
+
+        balance_window = StartingBalanceWindow(
+            self._on_balance_complete,
+            saved_balance  # Pass saved balance as default
+        )
         balance_window.show()
 
     def _on_balance_complete(self, balance):
         """Handle balance entry completion"""
         self.inventory.set_starting_balance(balance)
+        stocked_products = self.data_manager.get_products()
         entry_window = StockInputWindow(
             self.inventory.get_products(),
-            self._on_products_complete
+            stocked_products,
+            self._on_products_complete,
         )
         entry_window.show()
 
     def _on_products_complete(self):
         """Handle product entry completion and show main window"""
-        summary_window = AlgoTabWindow(self.inventory)
+        summary_window = AlgoTabWindow(self.inventory, self.data_manager)
         summary_window.show()
 
 
