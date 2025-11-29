@@ -4,12 +4,13 @@ from tkinter import messagebox
 
 class StartingBalanceWindow():
 
-    def __init__(self, on_complete_callback):
+    def __init__(self, on_complete_callback, saved_balance=0.0):
+        self.saved_balance = saved_balance
         self.on_complete = on_complete_callback
         self.window = tk.Tk()
         self.window.configure(background="black")
         self.window.title("Starting Balance")
-        self.window.geometry("350x180")
+        self.window.geometry("350x200")
 
         self._create_widgets()
 
@@ -17,6 +18,11 @@ class StartingBalanceWindow():
         # Header
         tk.Label(self.window, text="Αρχικό Ταμείο",
                  font=("Arial", 18, "bold"), bg="black", fg="white").pack(pady=15)
+
+        # Show saved balance if exists
+        if self.saved_balance > 0:
+            tk.Label(self.window, text=f"Προηγούμενο: €{self.saved_balance:.2f}",
+                     font=("Arial", 11), bg="black", fg="cyan").pack(pady=2)
 
         # Entry frame
         entry_frame = tk.Frame(self.window, bg="black")

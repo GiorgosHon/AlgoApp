@@ -1,17 +1,18 @@
 import tkinter as tk
 from tkinter import messagebox
+from xmlrpc.client import MAXINT
 
 
 class StockInputWindow():
 
-    def __init__(self, products, on_complete_callback):
+    def __init__(self, products, saved_products, on_complete_callback):
         self.products = products
         self.on_complete = on_complete_callback
         self.window = tk.Tk()
         self.window.configure(background="black")
         self.window.title("Stock Input")
         self.window.geometry("600x550")
-
+        self.saved_products = saved_products
         self.unumbered_products = [
             "Καφές",
             "Φραπές",
@@ -21,14 +22,11 @@ class StockInputWindow():
         self.stocked_products = []
 
         for product in self.products:
-            self.stocked_products.append(product)
-
-        for product in self.products:
             if product.name in self.unumbered_products:
-                product.set_quantity(100)
-                self.stocked_products.remove(product)
+                product.set_quantity(int(MAXINT))
+            else:
+                self.stocked_products.append(product)
 
-        print(self.stocked_products)
         self.entries = {}
         self._create_widgets()
 
