@@ -19,7 +19,6 @@ class StartingBalanceWindow(tk.Frame):
                  font=("Arial", 18, "bold"), bg="black", fg="white").pack(pady=15)
 
         # Show saved balance if exists
-        print(self.saved_balance)
         if self.saved_balance != 0:
             tk.Label(self, text=f"Προηγούμενο: €{self.saved_balance:.2f}",
                      font=("Arial", 11), bg="black", fg="cyan").pack(pady=2)

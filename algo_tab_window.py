@@ -12,7 +12,7 @@ class AlgoTabWindow(tk.Frame):
         self.configure(bg="black")
 
         self.inventory = inventory
-        self.settings_manager = settings_manager
+        self.data_manager = settings_manager
         # self.window.geometry("920x700")
         # self.total_value = self.inventory.get_total_inventory_value()
         self.current_total = self.inventory.starting_balance
@@ -67,8 +67,8 @@ class AlgoTabWindow(tk.Frame):
                   font=("Arial", 13, "bold"), bg="red", fg="white",
                   width=18, height=2).grid(row=1, column=0, padx=5, pady=3)
 
-        self.time_label = tk.Label(button_frame, text=self.settings_manager.get_time(),
-                 font=("Arial", 12, "bold"),bg="black", fg="white")
+        self.time_label = tk.Label(button_frame, text=self.data_manager.get_time(),
+                                   font=("Arial", 12, "bold"), bg="black", fg="white")
         self.time_label.grid(row=3, column=1, padx=5, pady=3)
 
 
@@ -166,7 +166,7 @@ class AlgoTabWindow(tk.Frame):
     def update_total(self, price_change):
         """Update the current balance"""
         self.current_total += price_change
-        self.settings_manager.set_current_balance(self.current_total)
+        self.data_manager.set_current_balance(self.current_total)
 
     def update_displays(self):
         """Update all dynamic labels"""
@@ -177,7 +177,7 @@ class AlgoTabWindow(tk.Frame):
             fg="green" if self.current_total >= 0 else "red"
         )
 
-        self.time_label.config(text=str(self.settings_manager.get_time())+f" : {self.change_num_entry.get()}€")
+        self.time_label.config(text=str(self.data_manager.get_time()) + f" : {self.change_num_entry.get()}€")
 
         # # Update all quantity labels
         # for product in self.inventory.products:
@@ -189,14 +189,14 @@ class AlgoTabWindow(tk.Frame):
         if amount is not int:
             amount=int(amount)
         self.current_total += amount
-        self.settings_manager.set_current_balance(self.current_total)
+        self.data_manager.set_current_balance(self.current_total)
         self.update_displays()
 
     def close_app(self):
         """Close the application with confirmation"""
 
         # Save balance before closing
-        self.settings_manager.set_current_balance(self.current_total)
+        self.data_manager.set_current_balance(self.current_total)
         confirm = messagebox.askokcancel("Κλείσιμο Εφαρμογής",
                                          "Είσαι σίγουρος ότι θέλεις να κλείσεις την εφαρμογή;")
         if confirm:

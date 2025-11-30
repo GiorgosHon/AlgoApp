@@ -22,7 +22,7 @@ class DataManager:
             "Μπύρα Μικρή": 0,
             "Μπύρα Αλφα": 0,
             "Μπύρα Fix": 0,
-            "Κρουασάν": 0
+            "Κρουασαν": 0
         }
 
         # Ensure directory exists
@@ -30,6 +30,9 @@ class DataManager:
 
         # Load or create settings
         self.settings = self._load_settings()
+
+    def data_exists(self):
+        return os.path.exists(self.settings_file)
 
     def _load_settings(self):
         """Load settings from the file or return defaults"""
@@ -75,13 +78,13 @@ class DataManager:
 
     def set_products(self, products):
         for product in products:
-            self.settings[product] = product.get_quantity()
+            self.settings[product.get_name()] = product.get_quantity()
         return self.save_settings()
 
     def get_products(self):
         ans = dict()
         try:
-            if self.settings["Κρουασάν"]:
+            if self.data_exists():
                 """Get the saved products"""
                 for product in self.products.keys():
                     ans[product] = self.settings[product]

@@ -25,24 +25,34 @@ class AlgoApp:
 
     def _initialize_products(self):
         """Initialize default products"""
-        defaultProducts = [
-            ("Καφές", 1),
-            ("Φραπές", 0.5),
-            ("Hell", 1),
-            ("Fanta", 1),
-            ("Coca Cola", 1),
-            ("Sprite", 1),
-            ("Μπύρα Μικρή", 1),
-            ("Μπύρα Αλφα", 2),
-            ("Μπύρα Fix", 2),
-            ("Ποτό", 3),
-            ("Σφηνάκι", 1),
-            ("Κρουασάν", 0.5)
-        ]
+        defaultProducts = {
+            "Καφές": 1,
+            "Φραπές": 0.5,
+            "Hell": 1,
+            "Fanta": 1,
+            "Coca Cola": 1,
+            "Sprite": 1,
+            "Μπύρα Μικρή": 1,
+            "Μπύρα Αλφα": 2,
+            "Μπύρα Fix": 2,
+            "Ποτό": 3,
+            "Σφηνάκι": 1,
+            "Κρουασαν": 0.5
+        }
 
-        for name, price in defaultProducts:
-            product = Product(name, price)
-            self.inventory.add_product(product)
+        if self.data_manager.data_exists():
+            product_quantities = self.data_manager.get_products()
+            for product_name, product_price in defaultProducts.items():
+                if product_name in product_quantities:
+                    product_temp = Product(product_name, product_price, product_quantities[product_name])
+                    self.inventory.add_product(product_temp)
+                else:
+                    product_temp = Product(product_name, product_price)
+                    self.inventory.add_product(product_temp)
+        else:
+            for product_name, product_price in defaultProducts.items():
+                product = Product(product_name, product_price)
+                self.inventory.add_product(product)
 
     def _switch_frame(self, frame_class, *args, **kwargs):
         """Helper to destroy current frame and load new one"""
@@ -75,14 +85,12 @@ class AlgoApp:
     def _on_balance_complete(self, balance):
         """Handle balance entry completion"""
         self.inventory.set_starting_balance(balance)
-        stocked_products = self.data_manager.get_products()
         self._switch_frame(
             StockInputWindow,
             self.inventory.get_products(),
-            stocked_products,
             self.data_manager,
             self._on_products_complete,
-            geometry="600x650"
+            geometry="600x500"
         )
 
     def _on_products_complete(self):
