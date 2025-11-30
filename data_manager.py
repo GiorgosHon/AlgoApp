@@ -7,10 +7,10 @@ class DataManager:
     """Manages persistent settings for the AlgoTab application"""
 
     def __init__(self):
-        # Get user's home directory
+        # Get a user's home directory
         user_home = os.path.expanduser("~")
 
-        # Create settings directory
+        # Create a settings directory
         self.settings_dir = os.path.join(user_home, "Documents", "AlgoTab_Data")
         self.settings_file = os.path.join(self.settings_dir, "settings.json")
 
@@ -32,7 +32,7 @@ class DataManager:
         self.settings = self._load_settings()
 
     def _load_settings(self):
-        """Load settings from file or return defaults"""
+        """Load settings from the file or return defaults"""
         if os.path.exists(self.settings_file):
             try:
                 with open(self.settings_file, 'r', encoding='utf-8') as f:
@@ -45,7 +45,8 @@ class DataManager:
 
     def _default_settings(self):
         """Return default settings"""
-        saved_info = {"current_balance": 0.0}
+        saved_info = dict()
+        saved_info["current_balance"] = 0
         for product, value in self.products.items():
             saved_info[product] = value
 
@@ -53,7 +54,7 @@ class DataManager:
         return saved_info
 
     def save_settings(self):
-        """Save current settings to file"""
+        """Save current settings to a file"""
         try:
             with open(self.settings_file, 'w', encoding='utf-8') as f:
                 json.dump(self.settings, f, indent=4, ensure_ascii=False)
@@ -74,7 +75,7 @@ class DataManager:
 
     def set_products(self, products):
         for product in products:
-            self.settings[product] = products[product]
+            self.settings[product] = product.get_quantity()
         return self.save_settings()
 
     def get_products(self):
