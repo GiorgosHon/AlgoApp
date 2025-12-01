@@ -1,21 +1,18 @@
 import tkinter as tk
 from tkinter import messagebox
-from tkinter import filedialog
 import csv
 import os
 from datetime import datetime
 
 
-class AlgoTabWindow():
+class AlgoTabWindow(tk.Frame):
 
-    def __init__(self, inventory, settings_manager):
+    def __init__(self, parent, inventory, settings_manager):
+        super().__init__(parent)
+        self.configure(bg="black")
+
         self.inventory = inventory
-        self.settings_manager = settings_manager
-        self.window = tk.Tk()
-        self.window.configure(background="black")
-        self.window.title("Algo Tab")
-        self.window.geometry("920x700")
-        self.total_value = self.inventory.get_total_inventory_value()
+        self.data_manager = settings_manager
         self.current_total = self.inventory.starting_balance
 
         # Store labels that need to be updated
@@ -24,18 +21,22 @@ class AlgoTabWindow():
         self.quantity_labels = {}
         self.change_num_entry = None
         self.time_label = None
+        self.products_sold = []
+        products = self.inventory.get_products()
+        for product in products:
+            self.products_sold.append(product.get_quantity())
 
         self._create_widgets()
 
     def _create_widgets(self):
         # Header
-        header = tk.Frame(self.window, bg="black", height=20)
+        header = tk.Frame(self, bg="black", height=20)
         header.pack()
         tk.Label(header, text="Algo Tab", font=("Arial", 20, "bold"),
                  bg="black", fg="white").pack(pady=10)
 
         # Starting balance info
-        info_frame = tk.Frame(self.window, bg="black")
+        info_frame = tk.Frame(self, bg="black")
         info_frame.pack(padx=20, pady=5)
         tk.Label(info_frame, text=f"Αρχικό Ταμείο: €{self.inventory.starting_balance:.2f}",
                  font=("Arial", 12), bg="black", fg="cyan").pack(anchor="w", pady=5)
@@ -47,7 +48,7 @@ class AlgoTabWindow():
         self._create_totals()
 
         # Action buttons
-        button_frame = tk.Frame(self.window, bg="black")
+        button_frame = tk.Frame(self, bg="black")
         button_frame.pack(pady=15)
 
         tk.Button(button_frame, text="💾 Εξαγωγή CSV", command=self.confirm_export_to_csv,
@@ -68,15 +69,15 @@ class AlgoTabWindow():
                   font=("Arial", 13, "bold"), bg="red", fg="white",
                   width=18, height=2).grid(row=1, column=0, padx=5, pady=3)
 
-        self.time_label = tk.Label(button_frame, text=self.settings_manager.get_time(),
-                 font=("Arial", 12, "bold"),bg="black", fg="white")
+        self.time_label = tk.Label(button_frame, text=self.data_manager.get_time(),
+                                   font=("Arial", 12, "bold"), bg="black", fg="white")
         self.time_label.grid(row=3, column=1, padx=5, pady=3)
 
 
     def _create_menu(self):
-        # Create canvas for scrolling
-        canvas = tk.Canvas(self.window, bg="black", highlightthickness=0, height=400)
-        scrollbar = tk.Scrollbar(self.window, orient="vertical", command=canvas.yview)
+        # Create a canvas for scrolling
+        canvas = tk.Canvas(self, bg="black", highlightthickness=0, height=400)
+        scrollbar = tk.Scrollbar(self, orient="vertical", command=canvas.yview)
         product_container = tk.Frame(canvas, bg="black")
 
         product_container.bind(
@@ -101,6 +102,7 @@ class AlgoTabWindow():
                  bg="black", fg="white").grid(row=0, column=4, padx=10, pady=8)
 
         current_row = 1
+        index = 0
         for product in self.inventory.products:
             # Product name
             tk.Label(product_frame, text=product.name, font=("Arial", 13),
@@ -119,17 +121,18 @@ class AlgoTabWindow():
 
             # Minus button (return/remove from tab)
             minus_btn = tk.Button(product_frame, text="-",
-                                  command=lambda p=product: self.add_to_tab(p),
+                                  command=lambda p=product: self.remove_from_tab(p),
                                   font=("Arial", 14), bg="red", fg="white", width=4, height=1)
             minus_btn.grid(row=current_row, column=3, padx=2, pady=5)
 
             # Products given
-            quantity_label = tk.Label(product_frame, text=str(product.quantity),
+
+            quantity_label = tk.Label(product_frame, text=str(self.products_sold[index]-product.get_quantity()),
                                       font=("Arial", 14, "bold"), bg="black", fg="yellow",
                                       width=6)
             quantity_label.grid(row=current_row, column=4, padx=10, pady=5)
             self.quantity_labels[product.name] = quantity_label
-
+            index += 1
             current_row += 1
 
         # Pack canvas and scrollbar
@@ -137,14 +140,8 @@ class AlgoTabWindow():
         scrollbar.pack(side="right", fill="y")
 
     def _create_totals(self):
-        totals_frame = tk.Frame(self.window, bg="black", relief="ridge", borderwidth=2)
+        totals_frame = tk.Frame(self, bg="black", relief="ridge", borderwidth=2)
         totals_frame.pack(padx=20, pady=15, fill="x")
-
-        # Inventory value label
-        self.inventory_label = tk.Label(totals_frame,
-                                        text=f"Συνολική Αξία Αποθέματος: €{self.total_value:,.2f}",
-                                        font=("Arial", 14, "bold"), bg="black", fg="cyan")
-        self.inventory_label.pack(pady=8)
 
         # Current balance label
         self.balance_label = tk.Label(totals_frame,
@@ -158,7 +155,7 @@ class AlgoTabWindow():
         """Sell product - decrease inventory, increase balance"""
         if product.quantity > 0:
             product.sell_product()
-            self.update_total(product.price)
+            self.update_total(int(product.get_price()))
             self.update_displays()
         else:
             messagebox.showwarning("Μη Διαθέσιμο",
@@ -167,51 +164,52 @@ class AlgoTabWindow():
     def remove_from_tab(self, product):
         """Return product - increase inventory, decrease balance"""
         product.buy_product()
-        self.update_total(-product.price)
+        self.update_total(int(-product.get_price()))
         self.update_displays()
 
     def update_total(self, price_change):
         """Update the current balance"""
         self.current_total += price_change
-        self.settings_manager.set_current_balance(self.current_total)
+        self.data_manager.set_current_balance(self.current_total)
 
     def update_displays(self):
         """Update all dynamic labels"""
-        # Update total inventory value
-        self.total_value = self.inventory.get_total_inventory_value()
-        self.inventory_label.config(
-            text=f"Συνολική Αξία Αποθέματος: €{self.total_value:,.2f}")
 
-        # Update current balance with color coding
+        # Update the current balance with color coding
         self.balance_label.config(
             text=f"Τρέχον Ταμείο: €{self.current_total:,.2f}",
             fg="green" if self.current_total >= 0 else "red"
         )
 
-        self.time_label.config(text=str(self.settings_manager.get_time())+f" : {self.change_num_entry.get()}€")
+        self.time_label.config(text=str(self.data_manager.get_time()) + f" : {self.change_num_entry.get()}€")
 
-        # # Update all quantity labels
-        # for product in self.inventory.products:
-        #     if product.name in self.quantity_labels:
-        #         self.quantity_labels[product.name].config(text=str(product.quantity))
+        # Update all quantity labels
+        index = 0
+        for product in self.inventory.products:
+            if product.name in self.quantity_labels:
+                self.quantity_labels[product.name].config(text=str(self.products_sold[index]-product.get_quantity()))
+            index += 1
+        self.data_manager.set_products(self.inventory.get_products())
+        self.data_manager.save_settings()
 
     def change_balance(self):
         amount = int(self.change_num_entry.get())
         if amount is not int:
             amount=int(amount)
         self.current_total += amount
-        self.settings_manager.set_current_balance(self.current_total)
+        self.data_manager.set_current_balance(self.current_total)
         self.update_displays()
 
     def close_app(self):
         """Close the application with confirmation"""
 
         # Save balance before closing
-        self.settings_manager.set_current_balance(self.current_total)
+        self.data_manager.set_current_balance(self.current_total)
+        self.data_manager.save_settings()
         confirm = messagebox.askokcancel("Κλείσιμο Εφαρμογής",
                                          "Είσαι σίγουρος ότι θέλεις να κλείσεις την εφαρμογή;")
         if confirm:
-            self.window.destroy()
+            self.master.destroy()
 
     def confirm_export_to_csv(self):
         """Ask for confirmation before exporting to CSV"""
@@ -222,17 +220,17 @@ class AlgoTabWindow():
 
     def export_to_csv_with_dialog(self):
 
-        # Get user's home directory
+        # Get a user's home directory
         user_home = os.path.expanduser("~")
 
-        # Create base directory in Documents
+        # Create a base directory in Documents
         base_dir = os.path.join(user_home, "Documents", "AlgoTab_Data")
         # Get the current date info
         current_datetime = datetime.now()
         year = current_datetime.strftime("%Y")
         month = current_datetime.strftime("%Y-%m_%B")  # e.g. 2025-11_November
-        date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
-    
+        date_time_string = current_datetime.strftime("%Y-%m-%d__%H-%M")
+
         # Create folder structure
         export_dir = os.path.join(base_dir, year, month)
         try:
@@ -247,29 +245,23 @@ class AlgoTabWindow():
         try:
             with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
                 csv_writer = csv.writer(csv_file)
-                csv_writer.writerow(["Προϊόν", "Ποσότητα", "Τιμή μονάδας", "Συνολική αξία"])
-
+                index = 0
+                csv_writer.writerow(["Προϊόν", "Τιμή μονάδας", "Products given", "Συνολική αξία"])
                 for product in self.inventory.products:
-                    total_value = product.get_total_value()
+                    given_num = self.products_sold[index] - product.get_quantity()
                     csv_writer.writerow([
                         product.name,
-                        product.quantity,
-                        f"€{product.price:.2f}",
-                        f"€{total_value:.2f}"
+                        f"{product.price:.2f}€",
+                        str(given_num),
+                        f"{product.get_price()*given_num:.2f}€"
                     ])
+                    index += 1
 
-                csv_writer.writerow(["", "", "", ""])
-
-                csv_writer.writerow(["Αρχικό  Ταμείο", "", "", f"€{self.inventory.starting_balance:.2f}"])
-                csv_writer.writerow(["Τελικό Ταμείο", "", "", f"€{self.current_total:.2f}"])
+                csv_writer.writerow(["Αρχικό  Ταμείο", "...", "...", f"{self.inventory.starting_balance:.2f}€"])
+                csv_writer.writerow(["Τελικό Ταμείο", "...", "...", f"{self.current_total:.2f}€"])
+                csv_writer.writerow(["Κέρδος:", "...", "...", f"{self.current_total-self.inventory.starting_balance}€"])
 
                 messagebox.showinfo("Επιτυχία", f"Το αρχειο αποθηκεύτηκε επιτυχώς\n\n{file_path}")
 
-
         except Exception as e:
-            messagebox.showerror()
-
-
-    def show(self):
-        """Start the main event loop"""
-        self.window.mainloop()
+            messagebox.showerror(f"   {e}   ")

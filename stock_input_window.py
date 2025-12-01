@@ -3,17 +3,15 @@ from tkinter import messagebox
 from xmlrpc.client import MAXINT
 
 
-class StockInputWindow():
+class StockInputWindow(tk.Frame):
 
-    def __init__(self, products, saved_products, on_complete_callback):
+    def __init__(self, parent, products, data_manager,  on_complete_callback):
+        super().__init__(parent)
+        self.configure(bg="black")
         self.products = products
+        self.data_manager = data_manager
         self.on_complete = on_complete_callback
-        self.window = tk.Tk()
-        self.window.configure(background="black")
-        self.window.title("Stock Input")
-        self.window.geometry("600x550")
-        self.saved_products = saved_products
-        self.unumbered_products = [
+        self.unnumbered_products = [
             "Καφές",
             "Φραπές",
             "Ποτό",
@@ -22,8 +20,8 @@ class StockInputWindow():
         self.stocked_products = []
 
         for product in self.products:
-            if product.name in self.unumbered_products:
-                product.set_quantity(int(MAXINT))
+            if product.name in self.unnumbered_products:
+                product.set_quantity(int(1337))
             else:
                 self.stocked_products.append(product)
 
@@ -32,12 +30,12 @@ class StockInputWindow():
 
     def _create_widgets(self):
         # Header
-        tk.Label(self.window, text="Εισαγωγή Αποθέματος",
+        tk.Label(self, text="Εισαγωγή Αποθέματος",
                  font=("Arial", 16, "bold"), bg="black", fg="white").pack(pady=15)
 
         # Create scrollable frame for products
-        canvas = tk.Canvas(self.window, bg="black", highlightthickness=0)
-        scrollbar = tk.Scrollbar(self.window, orient="vertical", command=canvas.yview)
+        canvas = tk.Canvas(self, bg="black", highlightthickness=0)
+        scrollbar = tk.Scrollbar(self, orient="vertical", command=canvas.yview)
         scrollable_frame = tk.Frame(canvas, bg="black")
 
         scrollable_frame.bind(
@@ -79,7 +77,7 @@ class StockInputWindow():
             entry = tk.Entry(frame, font=("Arial", 12), width=10,
                              justify="center", bg="white", fg="black")
             entry.grid(row=current_row, column=2, padx=10, pady=5)
-            entry.insert(0, "0")
+            entry.insert(0, f"{product.get_quantity()}")
             self.entries[product] = entry
 
             if first_entry is None:
@@ -98,7 +96,7 @@ class StockInputWindow():
         scrollbar.pack(side="right", fill="y")
 
         # Buttons
-        button_frame = tk.Frame(self.window, bg="black")
+        button_frame = tk.Frame(self, bg="black")
         button_frame.pack(pady=15)
 
         tk.Button(button_frame, text="Επιβεβαίωση", command=self.update_stock,
@@ -138,12 +136,8 @@ class StockInputWindow():
                     raise ValueError("Negative quantity")
                 product.set_quantity(quantity)
 
-            self.window.destroy()
+            self.data_manager.set_products(self.entries.keys())
             self.on_complete()
 
         except ValueError:
             messagebox.showerror("Σφάλμα", "Παρακαλώ εισάγετε έγκυρους αριθμούς για όλα τα προϊόντα!")
-
-    def show(self):
-        """Start the window main loop"""
-        self.window.mainloop()

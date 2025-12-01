@@ -15,10 +15,6 @@ class Inventory:
     def add_to_total_inventory_value(self):
         pass
     
-    def get_total_inventory_value(self):
-        """Calculate total value of all products in stock"""
-        return sum(product.get_total_value() for product in self.products)
-    
     def get_products(self):
         """Return list of all products"""
         return self.products

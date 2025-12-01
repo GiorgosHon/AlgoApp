@@ -1,75 +1,106 @@
 import tkinter as tk
-from tkinter import filedialog
-
-import data_manager
 from product import Product
 from inventory import Inventory
 from starting_balance_window import StartingBalanceWindow
 from stock_input_window import StockInputWindow
 from algo_tab_window import AlgoTabWindow
 from data_manager import DataManager
-import csv
-import os
-from datetime import datetime
-import tkinter.messagebox as messagebox
 
 
 class AlgoApp:
 
     def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("AlgoApp")
+        self.root.configure(background="black")
+        self.root.geometry("700x650") # Set a default size if needed
+
         self.data_manager = DataManager()
         self.inventory = Inventory()
         self._initialize_products()
 
         self.start()
 
+        self.root.mainloop()
+
     def _initialize_products(self):
         """Initialize default products"""
-        defaultProducts = [
-            ("Καφές", 1),
-            ("Φραπές", 0.5),
-            ("Hell", 1),
-            ("Fanta", 1),
-            ("Coca Cola", 1),
-            ("Sprite", 1),
-            ("Μπύρα Μικρή", 1),
-            ("Μπύρα Αλφα", 2),
-            ("Μπύρα Fix", 2),
-            ("Ποτό", 3),
-            ("Σφηνάκι", 1),
-            ("Κρουασάν", 0.5)
-        ]
+        defaultProducts = {
+            "Καφές": 1,
+            "Φραπές": 0.5,
+            "Hell": 1,
+            "Fanta": 1,
+            "Coca Cola": 1,
+            "Sprite": 1,
+            "Μπύρα Μικρή": 1,
+            "Μπύρα Αλφα": 2,
+            "Μπύρα Fix": 2,
+            "Ποτό": 3,
+            "Σφηνάκι": 1,
+            "Κρουασαν": 0.5
+        }
 
-        for name, price in defaultProducts:
-            product = Product(name, price)
-            self.inventory.add_product(product)
+        if self.data_manager.data_exists():
+            product_quantities = self.data_manager.get_products()
+            product_quantities = self.data_manager.get_products()
+            for product_name, product_price in defaultProducts.items():
+                if product_name in product_quantities:
+                    product_temp = Product(product_name, product_price, product_quantities[product_name])
+                    self.inventory.add_product(product_temp)
+                else:
+                    product_temp = Product(product_name, product_price)
+                    self.inventory.add_product(product_temp)
+        else:
+            for product_name, product_price in defaultProducts.items():
+                product = Product(product_name, product_price)
+                self.inventory.add_product(product)
+
+    def _switch_frame(self, frame_class, *args, **kwargs):
+        """Helper to destroy current frame and load new one"""
+        # Extract geometry from kwargs if it exists, so it doesn't get passed to the frame
+        geometry = kwargs.pop('geometry', None)
+
+        # Clear old frames
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+        if geometry:
+            self.root.geometry(geometry)
+
+        new_frame = frame_class(self.root, *args, **kwargs)
+        new_frame.pack(fill="both", expand=True)
+        return new_frame
 
     def start(self):
-        """Start the application flow"""
-        # Get saved balance or ask for new one
+        # Get saved balance
         saved_balance = self.data_manager.get_current_balance()
 
-        balance_window = StartingBalanceWindow(
+        # Switch to the frame instead of creating a new window
+        self._switch_frame(
+            StartingBalanceWindow,
             self._on_balance_complete,
-            saved_balance  # Pass saved balance as default
+            saved_balance,
+            geometry="450x300"
         )
-        balance_window.show()
 
     def _on_balance_complete(self, balance):
         """Handle balance entry completion"""
         self.inventory.set_starting_balance(balance)
-        stocked_products = self.data_manager.get_products()
-        entry_window = StockInputWindow(
+        self._switch_frame(
+            StockInputWindow,
             self.inventory.get_products(),
-            stocked_products,
+            self.data_manager,
             self._on_products_complete,
+            geometry="600x500"
         )
-        entry_window.show()
 
     def _on_products_complete(self):
-        """Handle product entry completion and show main window"""
-        summary_window = AlgoTabWindow(self.inventory, self.data_manager)
-        summary_window.show()
+        self._switch_frame(
+            AlgoTabWindow,
+            self.inventory,
+            self.data_manager,
+            geometry="940x700"
+        )
 
 
 if __name__ == "__main__":
