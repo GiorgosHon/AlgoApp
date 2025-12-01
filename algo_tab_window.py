@@ -14,6 +14,7 @@ class AlgoTabWindow(tk.Frame):
         self.inventory = inventory
         self.data_manager = settings_manager
         self.current_total = self.inventory.starting_balance
+        self.balance_changes = []
 
         # Store labels that need to be updated
         self.balance_label = None
@@ -180,8 +181,9 @@ class AlgoTabWindow(tk.Frame):
             text=f"Τρέχον Ταμείο: €{self.current_total:,.2f}",
             fg="green" if self.current_total >= 0 else "red"
         )
+        balance_timestamp = str(self.data_manager.get_time()) + f" : {self.change_num_entry.get()}€"
+        self.time_label.config(text=balance_timestamp)
 
-        self.time_label.config(text=str(self.data_manager.get_time()) + f" : {self.change_num_entry.get()}€")
 
         # Update all quantity labels
         index = 0
@@ -196,9 +198,14 @@ class AlgoTabWindow(tk.Frame):
         amount = int(self.change_num_entry.get())
         if amount is not int:
             amount=int(amount)
-        self.current_total += amount
-        self.data_manager.set_current_balance(self.current_total)
-        self.update_displays()
+        try:
+            balance_timestamp = str(self.data_manager.get_time()) + f" : {self.change_num_entry.get()}€"
+            self.balance_changes.append(balance_timestamp)
+            self.current_total += amount
+            self.data_manager.set_current_balance(self.current_total)
+            self.update_displays()
+        except ValueError as e:
+            messagebox.showerror(f"  {e}  ")
 
     def close_app(self):
         """Close the application with confirmation"""
@@ -259,6 +266,8 @@ class AlgoTabWindow(tk.Frame):
 
                 csv_writer.writerow(["Αρχικό  Ταμείο", "...", "...", f"{self.inventory.starting_balance:.2f}€"])
                 csv_writer.writerow(["Τελικό Ταμείο", "...", "...", f"{self.current_total:.2f}€"])
+                for balance_change in self.balance_changes:
+                    csv_writer.writerow(["Μπηκαν στο ταμείο:", f"{balance_change}", "...", ""])
                 csv_writer.writerow(["Κέρδος:", "...", "...", f"{self.current_total-self.inventory.starting_balance}€"])
 
                 messagebox.showinfo("Επιτυχία", f"Το αρχειο αποθηκεύτηκε επιτυχώς\n\n{file_path}")
