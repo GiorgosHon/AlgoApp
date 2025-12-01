@@ -42,6 +42,7 @@ class AlgoApp:
 
         if self.data_manager.data_exists():
             product_quantities = self.data_manager.get_products()
+            product_quantities = self.data_manager.get_products()
             for product_name, product_price in defaultProducts.items():
                 if product_name in product_quantities:
                     product_temp = Product(product_name, product_price, product_quantities[product_name])
@@ -79,7 +80,7 @@ class AlgoApp:
             StartingBalanceWindow,
             self._on_balance_complete,
             saved_balance,
-            geometry="350x200"
+            geometry="450x300"
         )
 
     def _on_balance_complete(self, balance):
@@ -98,7 +99,7 @@ class AlgoApp:
             AlgoTabWindow,
             self.inventory,
             self.data_manager,
-            geometry="920x700"
+            geometry="940x700"
         )
 
 
