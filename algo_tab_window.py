@@ -21,6 +21,7 @@ class AlgoTabWindow(tk.Frame):
         self.inventory_label = None
         self.quantity_labels = {}
         self.change_num_entry = None
+        self.comment_entry = None
         self.time_label = None
         self.products_sold = []
         products = self.inventory.get_products()
@@ -72,7 +73,11 @@ class AlgoTabWindow(tk.Frame):
 
         self.time_label = tk.Label(button_frame, text=self.data_manager.get_time(),
                                    font=("Arial", 12, "bold"), bg="black", fg="white")
-        self.time_label.grid(row=3, column=1, padx=5, pady=3)
+        self.time_label.grid(row=2, column=1, padx=5, pady=3)
+
+        self.comment_entry = tk.Entry(button_frame, font=("Arial", 12, "bold")
+                                 , width=20, bg="white", fg="black")
+        self.comment_entry.grid(row=3, column=1, padx=5, pady=3)
 
 
     def _create_menu(self):
@@ -156,7 +161,7 @@ class AlgoTabWindow(tk.Frame):
         """Sell product - decrease inventory, increase balance"""
         if product.quantity > 0:
             product.sell_product()
-            self.update_total(int(product.get_price()))
+            self.update_total(float(product.get_price()))
             self.update_displays()
         else:
             messagebox.showwarning("Μη Διαθέσιμο",
@@ -165,7 +170,7 @@ class AlgoTabWindow(tk.Frame):
     def remove_from_tab(self, product):
         """Return product - increase inventory, decrease balance"""
         product.buy_product()
-        self.update_total(int(-product.get_price()))
+        self.update_total(float(-product.get_price()))
         self.update_displays()
 
     def update_total(self, price_change):
@@ -181,9 +186,6 @@ class AlgoTabWindow(tk.Frame):
             text=f"Τρέχον Ταμείο: €{self.current_total:,.2f}",
             fg="green" if self.current_total >= 0 else "red"
         )
-        balance_timestamp = str(self.data_manager.get_time()) + f" : {self.change_num_entry.get()}€"
-        self.time_label.config(text=balance_timestamp)
-
 
         # Update all quantity labels
         index = 0
@@ -195,12 +197,13 @@ class AlgoTabWindow(tk.Frame):
         self.data_manager.save_settings()
 
     def change_balance(self):
-        amount = int(self.change_num_entry.get())
-        if amount is not int:
-            amount=int(amount)
+        amount = float(self.change_num_entry.get())
+        comments = self.comment_entry.get()
+
         try:
             balance_timestamp = str(self.data_manager.get_time()) + f" : {self.change_num_entry.get()}€"
-            self.balance_changes.append(balance_timestamp)
+            self.time_label.config(text=balance_timestamp)
+            self.balance_changes.append([balance_timestamp, comments])
             self.current_total += amount
             self.data_manager.set_current_balance(self.current_total)
             self.update_displays()
@@ -266,8 +269,8 @@ class AlgoTabWindow(tk.Frame):
 
                 csv_writer.writerow(["Αρχικό  Ταμείο", "...", "...", f"{self.inventory.starting_balance:.2f}€"])
                 csv_writer.writerow(["Τελικό Ταμείο", "...", "...", f"{self.current_total:.2f}€"])
-                for balance_change in self.balance_changes:
-                    csv_writer.writerow(["Μπηκαν στο ταμείο:", f"{balance_change}", "...", ""])
+                for balance_change, comment in self.balance_changes:
+                    csv_writer.writerow(["Μπηκαν στο ταμείο:", f"{balance_change}", f"{comment}", ""])
                 csv_writer.writerow(["Κέρδος:", "...", "...", f"{self.current_total-self.inventory.starting_balance}€"])
 
                 messagebox.showinfo("Επιτυχία", f"Το αρχειο αποθηκεύτηκε επιτυχώς\n\n{file_path}")
