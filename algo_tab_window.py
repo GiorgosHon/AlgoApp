@@ -7,14 +7,16 @@ from datetime import datetime
 
 class AlgoTabWindow(tk.Frame):
 
-    def __init__(self, parent, inventory, settings_manager):
+    # 1. Add 'on_update_click' parameter
+    def __init__(self, parent, inventory, settings_manager, on_update_click=None):
         super().__init__(parent)
         self.configure(bg="black")
 
         self.inventory = inventory
-        self.data_manager = settings_manager
-        self.current_total = self.inventory.starting_balance
         self.balance_changes = []
+        self.data_manager = settings_manager
+        self.on_update_click = on_update_click  # Store the callback
+        self.current_total = self.inventory.starting_balance
 
         # Store labels that need to be updated
         self.balance_label = None
@@ -57,11 +59,17 @@ class AlgoTabWindow(tk.Frame):
                   font=("Arial", 13, "bold"), bg="green", fg="white",
                   width=18, height=2).grid(row=0, column=0, padx=5, pady=3)
 
+        # 2. Add the Update Stock Button
+        # We check if the callback exists before adding the button (good practice)
+        if self.on_update_click:
+            tk.Button(button_frame, text="Ανανέωση Stock", command=self.update_stock,
+                      font=("Arial", 13, "bold"), bg="blue", fg="white",
+                      width=18, height=2).grid(row=2, column=0, padx=5, pady=3)
+
         self.change_num_entry = tk.Entry(button_frame, font=("Arial", 12, "bold")
-                                 , width=10, justify="center", bg="white", fg="black")
+                                         , width=10, justify="center", bg="white", fg="black")
         self.change_num_entry.grid(row=1, column=1, padx=5, pady=3)
         self.change_num_entry.insert(0, "0")
-
 
         tk.Button(button_frame, text="Change amount", command=self.change_balance,
                   font=("Arial", 12, "bold"), bg="orange", fg="white",
@@ -209,6 +217,10 @@ class AlgoTabWindow(tk.Frame):
             self.update_displays()
         except ValueError as e:
             messagebox.showerror(f"  {e}  ")
+
+    def update_stock(self):
+        self.confirm_export_to_csv()
+        self.on_update_click()
 
     def close_app(self):
         """Close the application with confirmation"""

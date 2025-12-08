@@ -92,17 +92,28 @@ class AlgoApp:
             self.inventory.get_products(),
             self.data_manager,
             self._on_products_complete,
-            geometry="600x500"
+            geometry="600x600"
         )
 
     def _on_products_complete(self):
+        """Handle product entry completion and show main window"""
         self._switch_frame(
-            AlgoTabWindow,
-            self.inventory,
+            AlgoTabWindow, 
+            self.inventory, 
             self.data_manager,
-            geometry="940x700"
+            on_update_click=self._open_stock_update, # Pass the new callback here
+            geometry="920x700"
         )
 
+    def _open_stock_update(self):
+        """Switch back to stock input window to update quantities"""
+        self._switch_frame(
+            StockInputWindow,
+            self.inventory.get_products(),
+            self.data_manager,
+            self._on_products_complete, # When done, go back to main tab
+            geometry="600x600"
+        )
 
 if __name__ == "__main__":
     app = AlgoApp()
